@@ -9,7 +9,6 @@ users = {
     'safu': '1234'
 }
 
-# Database setup
 def init_db():
     conn = sqlite3.connect('soc.db')
     c = conn.cursor()
@@ -17,6 +16,15 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
         severity TEXT NOT NULL,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+    )''')
+    c.execute('''CREATE TABLE IF NOT EXISTS incidents (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        description TEXT NOT NULL,
+        severity TEXT NOT NULL,
+        status TEXT DEFAULT 'Open',
+        reported_by TEXT NOT NULL,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     )''')
     conn.commit()
@@ -74,6 +82,39 @@ def delete_alert(id):
     conn.commit()
     conn.close()
     return redirect(url_for('dashboard'))
+
+@app.route('/incidents')
+def incidents():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    incidents = conn.execute('SELECT * FROM incidents ORDER BY timestamp DESC').fetchall()
+    conn.close()
+    return render_template('incidents.html', user=session['user'], incidents=incidents)
+
+@app.route('/add_incident', methods=['POST'])
+def add_incident():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    title = request.form['title']
+    description = request.form['description']
+    severity = request.form['severity']
+    conn = get_db()
+    conn.execute('INSERT INTO incidents (title, description, severity, reported_by) VALUES (?, ?, ?, ?)',
+                 (title, description, severity, session['user']))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('incidents'))
+
+@app.route('/close_incident/<int:id>')
+def close_incident(id):
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    conn = get_db()
+    conn.execute("UPDATE incidents SET status='Closed' WHERE id=?", (id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('incidents'))
 
 @app.route('/logout')
 def logout():
