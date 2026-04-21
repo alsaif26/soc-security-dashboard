@@ -110,6 +110,42 @@
             letter-spacing: 1px;
         }
 
+        /* Add Alert Form */
+        .add-alert-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .add-alert-form input {
+            flex: 1;
+            padding: 10px;
+            background-color: #111827;
+            border: 1px solid #1e2a3a;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 13px;
+        }
+
+        .add-alert-form select {
+            padding: 10px;
+            background-color: #111827;
+            border: 1px solid #1e2a3a;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 13px;
+        }
+
+        .add-alert-form button {
+            padding: 10px 20px;
+            background-color: #00ff88;
+            color: #0a0e1a;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
         .alert-item {
             display: flex;
             justify-content: space-between;
@@ -120,6 +156,12 @@
             background-color: #111827;
         }
 
+        .alert-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         .badge {
             padding: 4px 10px;
             border-radius: 20px;
@@ -127,9 +169,20 @@
             font-weight: bold;
         }
 
-        .badge.high { background-color: #ff4444; color: white; }
-        .badge.medium { background-color: #ffaa00; color: black; }
-        .badge.low { background-color: #00ff88; color: black; }
+        .badge.HIGH { background-color: #ff4444; color: white; }
+        .badge.MEDIUM { background-color: #ffaa00; color: black; }
+        .badge.LOW { background-color: #00ff88; color: black; }
+
+        .delete-btn {
+            padding: 4px 10px;
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: none;
+        }
 
         .log-item {
             padding: 8px 10px;
@@ -165,19 +218,19 @@
         <div class="stats-grid">
             <div class="card">
                 <h3>🚨 TOTAL THREATS</h3>
-                <div class="number red">142</div>
+                <div class="number red">{{ alerts|length }}</div>
             </div>
             <div class="card">
-                <h3>⚠️ ACTIVE ALERTS</h3>
-                <div class="number yellow">28</div>
+                <h3>⚠️ HIGH ALERTS</h3>
+                <div class="number yellow">{{ alerts|selectattr('severity', 'equalto', 'HIGH')|list|length }}</div>
             </div>
             <div class="card">
-                <h3>✅ RESOLVED</h3>
-                <div class="number green">114</div>
+                <h3>🟡 MEDIUM ALERTS</h3>
+                <div class="number green">{{ alerts|selectattr('severity', 'equalto', 'MEDIUM')|list|length }}</div>
             </div>
             <div class="card">
-                <h3>🖥️ SYSTEMS MONITORED</h3>
-                <div class="number blue">56</div>
+                <h3>🟢 LOW ALERTS</h3>
+                <div class="number blue">{{ alerts|selectattr('severity', 'equalto', 'LOW')|list|length }}</div>
             </div>
         </div>
 
@@ -196,30 +249,38 @@
         <!-- Bottom Panels -->
         <div class="bottom-grid">
 
+            <!-- Alerts Panel -->
             <div class="panel">
-                <h2>🚨 RECENT ALERTS</h2>
+                <h2>🚨 THREAT ALERTS</h2>
+
+                <!-- Add Alert Form -->
+                <form class="add-alert-form" method="POST" action="/add_alert">
+                    <input type="text" name="title" placeholder="Alert title..." required>
+                    <select name="severity">
+                        <option value="HIGH">HIGH</option>
+                        <option value="MEDIUM">MEDIUM</option>
+                        <option value="LOW">LOW</option>
+                    </select>
+                    <button type="submit">+ ADD</button>
+                </form>
+
+                <!-- Alerts List -->
+                {% for alert in alerts %}
                 <div class="alert-item">
-                    <span>SQL Injection Attempt</span>
-                    <span class="badge high">HIGH</span>
+                    <div class="alert-left">
+                        <span class="badge {{ alert.severity }}">{{ alert.severity }}</span>
+                        <span>{{ alert.title }}</span>
+                    </div>
+                    <a href="/delete_alert/{{ alert.id }}" class="delete-btn">✕</a>
                 </div>
-                <div class="alert-item">
-                    <span>Brute Force Login</span>
-                    <span class="badge high">HIGH</span>
-                </div>
-                <div class="alert-item">
-                    <span>Suspicious Port Scan</span>
-                    <span class="badge medium">MEDIUM</span>
-                </div>
-                <div class="alert-item">
-                    <span>Unusual File Access</span>
-                    <span class="badge medium">MEDIUM</span>
-                </div>
-                <div class="alert-item">
-                    <span>Failed SSH Login</span>
-                    <span class="badge low">LOW</span>
-                </div>
+                {% endfor %}
+
+                {% if alerts|length == 0 %}
+                <p style="color:#555; text-align:center; margin-top:20px;">No alerts yet</p>
+                {% endif %}
             </div>
 
+            <!-- Logs Panel -->
             <div class="panel">
                 <h2>📋 SYSTEM LOGS</h2>
                 <div class="log-item">
@@ -248,7 +309,6 @@
     </div>
 
     <script>
-        // Live Clock
         function updateClock() {
             const now = new Date();
             document.getElementById('clock').textContent = now.toLocaleString();
@@ -256,7 +316,6 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Line Chart
         const lineCtx = document.getElementById('lineChart').getContext('2d');
         new Chart(lineCtx, {
             type: 'line',
@@ -280,7 +339,6 @@
             }
         });
 
-        // Doughnut Chart
         const doughnutCtx = document.getElementById('doughnutChart').getContext('2d');
         new Chart(doughnutCtx, {
             type: 'doughnut',
