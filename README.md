@@ -215,7 +215,7 @@ You can also open a discussion in the repository.
 
 # 👨‍💻 About the Author
 
-Developed by **Safu**  
+Developed by **Mohammed Saif Al Sabah**  
 Computer Science and Engineering (CSE) student from Bangladesh.
 
 Interested in:
