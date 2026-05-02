@@ -38,7 +38,7 @@ Designed to demonstrate **cybersecurity monitoring concepts** with real-time das
 | Username | Password |
 |--------|--------|
 | admin | password123 |
-| safu | 1234 |
+| cat | 1234 |
 
 ---
 
